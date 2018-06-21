@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: 14-Jun-2018 às 20:30
+-- Generation Time: 21-Jun-2018 às 21:19
 -- Versão do servidor: 10.1.26-MariaDB
 -- PHP Version: 7.1.9
 
@@ -21,6 +21,22 @@ SET time_zone = "+00:00";
 --
 -- Database: `pt_migdal`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `login_save` (INOUT `id_user` SMALLINT(4), INOUT `email` VARCHAR(300), INOUT `password` VARCHAR(200))  NO SQL
+INSERT INTO login VALUES(NULL,id_user, email, password)$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `show_notifications` (IN `id_user` SMALLINT(4) UNSIGNED ZEROFILL)  NO SQL
+SELECT * from notification as n INNER JOIN notification_offence as o on o.id_notification = n.id_notification where n.id_user = id_user$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `user_save` (INOUT `first_name` VARCHAR(15), INOUT `last_name` VARCHAR(15), INOUT `nick_name` VARCHAR(10), INOUT `cell_phone` VARCHAR(20), INOUT `public_place` VARCHAR(200), INOUT `type_public_place` SMALLINT(4) UNSIGNED ZEROFILL, INOUT `postal_code` VARCHAR(15), INOUT `public_place_number` INT(6), INOUT `id_state` SMALLINT(4) UNSIGNED ZEROFILL, INOUT `id_religion` SMALLINT(4) UNSIGNED ZEROFILL, INOUT `id_gender` SMALLINT(4) UNSIGNED ZEROFILL, INOUT `sex` INT(1), INOUT `id_type` SMALLINT(4) UNSIGNED ZEROFILL, INOUT `id_entity` SMALLINT(4) UNSIGNED ZEROFILL)  NO SQL
+INSERT INTO user 
+    VALUES(null,`first_name`, `last_name`,`nick_name`,`cell_phone`,`public_place`,`type_public_place`,`postal_code`,`public_place_number`,`id_state`,`id_religion`,`id_gender`,`sex`,`id_type`,`id_entity`)$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -345,16 +361,17 @@ CREATE TABLE `follow` (
   `id_follow` smallint(4) NOT NULL,
   `id_user_follower` smallint(4) NOT NULL,
   `id_user_followed` smallint(4) NOT NULL,
-  `status` int(1) NOT NULL
+  `status` int(1) NOT NULL,
+  `id_relationship` smallint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Extraindo dados da tabela `follow`
 --
 
-INSERT INTO `follow` (`id_follow`, `id_user_follower`, `id_user_followed`, `status`) VALUES
-(1, 1, 2, 1),
-(2, 2, 1, 1);
+INSERT INTO `follow` (`id_follow`, `id_user_follower`, `id_user_followed`, `status`, `id_relationship`) VALUES
+(1, 1, 2, 1, 1),
+(2, 2, 1, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -386,7 +403,8 @@ CREATE TABLE `login` (
 --
 
 INSERT INTO `login` (`id`, `id_user`, `email`, `password`) VALUES
-(1, 1, 'ibraim.caiofabio@gmail.com', '2586be60a0d0fb7281e13db6cae2ba98');
+(1, 1, 'ibraim.caiofabio@gmail.com', '2586be60a0d0fb7281e13db6cae2ba98'),
+(2, 3, 'teste@gmail.com', '698dc19d489c4e4db73e28a713eab07b');
 
 -- --------------------------------------------------------
 
@@ -400,6 +418,8 @@ CREATE TABLE `notification` (
   `id_type_notification` smallint(4) NOT NULL,
   `dt_notification` date NOT NULL,
   `description` text NOT NULL,
+  `latitude` varchar(15) NOT NULL,
+  `longitude` varchar(15) NOT NULL,
   `status` int(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -407,8 +427,8 @@ CREATE TABLE `notification` (
 -- Extraindo dados da tabela `notification`
 --
 
-INSERT INTO `notification` (`id_notification`, `id_user`, `id_type_notification`, `dt_notification`, `description`, `status`) VALUES
-(1, 1, 1, '2018-06-14', 'regitred by sistem', 0);
+INSERT INTO `notification` (`id_notification`, `id_user`, `id_type_notification`, `dt_notification`, `description`, `latitude`, `longitude`, `status`) VALUES
+(1, 1, 1, '2018-06-14', 'registred by sistem', '-22.8959904', '-43.1830963', 0);
 
 -- --------------------------------------------------------
 
@@ -423,6 +443,13 @@ CREATE TABLE `notification_offence` (
   `id_country` smallint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Extraindo dados da tabela `notification_offence`
+--
+
+INSERT INTO `notification_offence` (`id_notification_offence`, `id_offence`, `id_notification`, `id_country`) VALUES
+(1, 1, 1, 30);
+
 -- --------------------------------------------------------
 
 --
@@ -431,6 +458,7 @@ CREATE TABLE `notification_offence` (
 
 CREATE TABLE `notification_views` (
   `id_notification_views` smallint(4) NOT NULL,
+  `id_notification` smallint(4) NOT NULL,
   `id_user` smallint(4) NOT NULL,
   `dt_view` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -439,8 +467,23 @@ CREATE TABLE `notification_views` (
 -- Extraindo dados da tabela `notification_views`
 --
 
-INSERT INTO `notification_views` (`id_notification_views`, `id_user`, `dt_view`) VALUES
-(1, 1, '2018-06-14');
+INSERT INTO `notification_views` (`id_notification_views`, `id_notification`, `id_user`, `dt_view`) VALUES
+(1, 1, 1, '2018-06-14');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `occurrence`
+--
+
+CREATE TABLE `occurrence` (
+  `id_occurrence` smallint(4) NOT NULL,
+  `id_place` smallint(4) UNSIGNED ZEROFILL NOT NULL,
+  `id_offence` smallint(4) NOT NULL,
+  `dt_occurrence` date NOT NULL,
+  `description` text NOT NULL,
+  `id_user` smallint(6) NOT NULL COMMENT 'author'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -460,6 +503,52 @@ CREATE TABLE `offence` (
   `level_5` int(30) DEFAULT NULL,
   `notes` text
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Extraindo dados da tabela `offence`
+--
+
+INSERT INTO `offence` (`id_offence`, `id_country`, `crime_code`, `description`, `level_1`, `level_2`, `level_3`, `level_4`, `level_5`, `notes`) VALUES
+(1, 30, '', 'Homicídio', NULL, NULL, NULL, NULL, NULL, 'Art. 121. Matar alguem:\r\n\r\nPena - reclusão, de seis a vinte anos.'),
+(2, 30, '', 'LEI Nº 11.343, Drogas', NULL, NULL, NULL, NULL, NULL, 'https://www.jusbrasil.com.br/artigos/busca?q=CAPAZES+DE+CAUSAR+DEPENDENCIA\r\n\r\nhttp://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11343.htm');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `place`
+--
+
+CREATE TABLE `place` (
+  `id_place` smallint(4) UNSIGNED ZEROFILL NOT NULL,
+  `id_country` smallint(4) NOT NULL,
+  `id_division` smallint(4) NOT NULL,
+  `name` varchar(60) NOT NULL,
+  `latitude` varchar(15) NOT NULL,
+  `longitude` varchar(15) NOT NULL,
+  `dangerous_level` int(11) NOT NULL COMMENT '>= 0 less >=5 more',
+  `class` char(1) NOT NULL COMMENT 'A-Z'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `relationship`
+--
+
+CREATE TABLE `relationship` (
+  `id_relationship` smallint(4) NOT NULL,
+  `label` varchar(15) NOT NULL,
+  `level_intimacy` int(2) NOT NULL COMMENT '0 >= ''closest'' >5 ''friend'''
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Extraindo dados da tabela `relationship`
+--
+
+INSERT INTO `relationship` (`id_relationship`, `label`, `level_intimacy`) VALUES
+(1, 'parent', 0),
+(2, 'brother', 1),
+(3, 'neighbor', 5);
 
 -- --------------------------------------------------------
 
@@ -670,7 +759,8 @@ CREATE TABLE `user` (
 
 INSERT INTO `user` (`id_user`, `first_name`, `last_name`, `nick_name`, `cell_phone`, `public_place`, `type_public_place`, `postal_code`, `public_place_number`, `id_state`, `id_religion`, `id_gender`, `sex`, `id_type`, `id_entity`) VALUES
 (1, 'Caio', 'Ibraim', 'JF$#S**WTG', '+55 21 96863 - 9055', NULL, 1, NULL, NULL, 1, 39, 0, 0, 0, 0),
-(2, 'Yuri', 'Ibraim', 'ATW#SJ@U@D', '+55 21 96863 - 9000', 'Rua Arnaldo Tavares', 1, '24467620', 1818, 1, 1, 0, 0, 0, 0);
+(2, 'Yuri', 'Ibraim', 'ATW#SJ@U@D', '+55 21 96863 - 9000', 'Rua Arnaldo Tavares', 1, '24467620', 1818, 1, 1, 0, 0, 0, 0),
+(3, 'Teste', 'Ibraim', '8', '21 2605-9692', 'Av. Marechal Deodoro', 2, '', 0, 1, 1, 1, 1, 0, 0);
 
 --
 -- Indexes for dumped tables
@@ -748,11 +838,34 @@ ALTER TABLE `notification_views`
   ADD KEY `id_user` (`id_user`);
 
 --
+-- Indexes for table `occurrence`
+--
+ALTER TABLE `occurrence`
+  ADD PRIMARY KEY (`id_occurrence`),
+  ADD KEY `id_user` (`id_user`),
+  ADD KEY `id_offence` (`id_offence`),
+  ADD KEY `id_place` (`id_place`);
+
+--
 -- Indexes for table `offence`
 --
 ALTER TABLE `offence`
   ADD PRIMARY KEY (`id_offence`),
   ADD KEY `id_country` (`id_country`);
+
+--
+-- Indexes for table `place`
+--
+ALTER TABLE `place`
+  ADD PRIMARY KEY (`id_place`),
+  ADD KEY `id_country` (`id_country`),
+  ADD KEY `id_division` (`id_division`);
+
+--
+-- Indexes for table `relationship`
+--
+ALTER TABLE `relationship`
+  ADD PRIMARY KEY (`id_relationship`);
 
 --
 -- Indexes for table `religion`
@@ -842,7 +955,7 @@ ALTER TABLE `gender`
 -- AUTO_INCREMENT for table `login`
 --
 ALTER TABLE `login`
-  MODIFY `id` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `notification`
@@ -854,7 +967,7 @@ ALTER TABLE `notification`
 -- AUTO_INCREMENT for table `notification_offence`
 --
 ALTER TABLE `notification_offence`
-  MODIFY `id_notification_offence` smallint(4) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_notification_offence` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notification_views`
@@ -863,10 +976,28 @@ ALTER TABLE `notification_views`
   MODIFY `id_notification_views` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `occurrence`
+--
+ALTER TABLE `occurrence`
+  MODIFY `id_occurrence` smallint(4) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `offence`
 --
 ALTER TABLE `offence`
-  MODIFY `id_offence` smallint(4) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_offence` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `place`
+--
+ALTER TABLE `place`
+  MODIFY `id_place` smallint(4) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `relationship`
+--
+ALTER TABLE `relationship`
+  MODIFY `id_relationship` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `religion`
@@ -902,7 +1033,7 @@ ALTER TABLE `type_user`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id_user` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_user` smallint(4) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables
@@ -943,10 +1074,25 @@ ALTER TABLE `notification_views`
   ADD CONSTRAINT `notification_views_ibfk_1` FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`);
 
 --
+-- Limitadores para a tabela `occurrence`
+--
+ALTER TABLE `occurrence`
+  ADD CONSTRAINT `occurrence_ibfk_1` FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`),
+  ADD CONSTRAINT `occurrence_ibfk_2` FOREIGN KEY (`id_offence`) REFERENCES `offence` (`id_offence`),
+  ADD CONSTRAINT `occurrence_ibfk_3` FOREIGN KEY (`id_place`) REFERENCES `place` (`id_place`);
+
+--
 -- Limitadores para a tabela `offence`
 --
 ALTER TABLE `offence`
   ADD CONSTRAINT `offence_ibfk_1` FOREIGN KEY (`id_country`) REFERENCES `country` (`id`);
+
+--
+-- Limitadores para a tabela `place`
+--
+ALTER TABLE `place`
+  ADD CONSTRAINT `place_ibfk_1` FOREIGN KEY (`id_country`) REFERENCES `country` (`id`),
+  ADD CONSTRAINT `place_ibfk_2` FOREIGN KEY (`id_division`) REFERENCES `division` (`id`);
 
 --
 -- Limitadores para a tabela `state`
